@@ -62,19 +62,33 @@ io.on('connection', function(socket){
 	}
 
 	//private message.
-	socket.on('private', function(data) {//data should contain 3 things, user_id, username, and message
-		
+	socket.on('private', function(data) {
+		/*
+			data should contain 3 things, user_id, username, and message
+			data = {
+				to_id: integer,
+				to: string,
+				message: string
+			}
+		*/
+
 		var me = socket.handshake.user.username;
 		var me_id = socket.handshake.user.id;
+		//We should probably do a "to" and "to_id" match here.  That would be one clever way to get past some stuff.
 		if(check_mutual(data.to_id, me_id)) {//1. Check to make sure you're allowed to send a message to this user via SQL.
-			//2. send the message to that user.
-			connectedUsers[data.to].emit('private', {from: me, message: data.msg});
-			//3. store the sent message in mongo.
-
+			
+			//2. check to make sure that the user is connected via sockets.
+			if(data.to in connectedUsers) {
+				//3. send the message to that user.
+				connectedUsers[data.to].emit('private', {from: me, message: data.msg});
+			}
+			//4. store the sent message in mongo.
+			store_message(me_id, me, data);
 		}
 	});
 
 });
+
 
 //note, to/from should use the username.
 function check_mutual(to, from) {//To is a string, from is an integer
@@ -106,6 +120,11 @@ function follows(id1, id2) {
 		console.log(results);
 		return results;
 	});
+}
+
+function store_message(me_id, me, data) {
+	//Do some magic mongo stuff.
+	return true;
 }
 
 
