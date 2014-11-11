@@ -7,13 +7,16 @@ var io = require('socket.io')(http);
 //Databases.
 var redis   = require("redis"),
     rClient = redis.createClient();
-var mysql   = require('mysql');
-var mConn	= mysql.createConnection({
+var Mysql   = require('mysql');
+var mysql	= Mysql.createConnection({
 	host : 'localhost',
-	database: 'twothousand'
+	database: 'twothousand',
 	user : 'twothousand',
 	password: 'TT99!!!'
 });
+var mongoose = require('mongoose');
+mongoose.connect('mongodb:://localhost/database');
+
 
 var connectedUsers = {};//this will hold all users who are currently connected.
 
@@ -59,10 +62,11 @@ io.on('connection', function(socket){
 	}
 
 	//private message.
-	socket.on('private', function(data) {
-		//1. Check to make sure you're allowed to send a message to this user via SQL.
+	socket.on('private', function(data) {//data should contain 3 things, user_id, username, and message
+		
 		var me = socket.handshake.user.username;
-		if(check_mutual(data.to, me)) {
+		var me_id = socket.handshake.user.id;
+		if(check_mutual(data.to_id, me_id)) {//1. Check to make sure you're allowed to send a message to this user via SQL.
 			//2. send the message to that user.
 			connectedUsers[data.to].emit('private', {from: me, message: data.msg});
 			//3. store the sent message in mongo.
@@ -73,12 +77,36 @@ io.on('connection', function(socket){
 });
 
 //note, to/from should use the username.
-function check_mutual(to, from) {
+function check_mutual(to, from) {//To is a string, from is an integer
+	//Find the ID for To
+	//var to_id = find_user(to);
+
 	//MySQL voodoo to check to see if they are mutual.
-	//mConn.query('select id',function(err, rows){});
-	return true;
+	var rOne = follows(to, from);
+	var rTwo = follows(from, to);
+	if(rOne && rTwo) {
+		return true;
+	} else {
+		return false;
+	}
 }
 
+
+function find_user(username) {
+	sql = 'SELECT id FROM users WHERE username = ' + mysql.escape(username);
+	mysql.query(sql, function(err, results) {
+		console.log(results);
+		return results[0].id;
+	});
+}
+
+function follows(id1, id2) {
+	sql = 'SELECT COUNT(*) FROM follows WHERE user_id = ' + mysql.escape(id1) + ' AND WHERE follower_id = ' + mysql.escape(id2);
+	mysql.query(sql, function(err, results) {
+		console.log(results);
+		return results;
+	});
+}
 
 
 http.listen(3000, function(){
