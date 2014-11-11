@@ -6,6 +6,8 @@ var io = require('socket.io')(http);
 var redis = require("redis"),
     rClient = redis.createClient();
 
+var connectedUsers = {};//this will hold all users who are currently connected.
+
 app.get('/', function(req, res){
 	res.sendfile('index.html');
 });
@@ -38,7 +40,7 @@ io.on('connection', function(socket){
 			console.log(reply);
 			if(reply) {
 				socket.handshake.user = reply;
-				
+				connectedUsers[socket.handshake.user.username] = socket;//this saves the socket so we can refer to it globally.
 			} else {
 				return false;
 			}
@@ -46,7 +48,28 @@ io.on('connection', function(socket){
 	} else {
 		return false;
 	}
+
+	//private message.
+	socket.on('private', function(data) {
+		//1. Check to make sure you're allowed to send a message to this user via SQL.
+		var me = socket.handshake.user.username;
+		if(check_mutual(data.to, me)) {
+			//2. send the message to that user.
+			connectedUsers[data.to].emit('private', {from: me, message: data.msg});
+			//3. store the sent message in mongo.
+
+		}
+	});
+
 });
+
+//note, to/from should use the username.
+function check_mutual(to, from) {
+	//MySQL voodoo to check to see if they are mutual.
+	return true;
+}
+
+
 
 http.listen(3000, function(){
 	console.log('listening on *:3000');
