@@ -1,0 +1,13 @@
+{
+  "name": "DirtyTalk",
+  "version": "0.0.1",
+  "description": "Sondry Chat System",
+  "dependencies": {
+    "cookie": "^0.1.2",
+    "cookie-parser": "^1.3.3",
+    "express": "^4.10.2",
+    "hiredis": "^0.1.17",
+    "redis": "^0.12.1",
+    "socket.io": "^1.2.0"
+  }
+}
