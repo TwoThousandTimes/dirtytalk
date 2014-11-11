@@ -3,8 +3,17 @@ var cookie = require('cookie');
 var cookieParser = require('cookie-parser');
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var redis = require("redis"),
+
+//Databases.
+var redis   = require("redis"),
     rClient = redis.createClient();
+var mysql   = require('mysql');
+var mConn	= mysql.createConnection({
+	host : 'localhost',
+	database: 'twothousand'
+	user : 'twothousand',
+	password: 'TT99!!!'
+});
 
 var connectedUsers = {};//this will hold all users who are currently connected.
 
@@ -66,6 +75,7 @@ io.on('connection', function(socket){
 //note, to/from should use the username.
 function check_mutual(to, from) {
 	//MySQL voodoo to check to see if they are mutual.
+	//mConn.query('select id',function(err, rows){});
 	return true;
 }
 
